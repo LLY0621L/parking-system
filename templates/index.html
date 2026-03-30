@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>停车更方便</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        body {
+            background: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .phone {
+            width: 360px;
+            height: 640px;
+            background: #409eff;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 0 30px rgba(0,0,0,0.2);
+            border-radius: 20px;
+        }
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            color: white;
+            font-size: 16px;
+        }
+        .location {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .location::before {
+            content: "📍";
+        }
+        .header {
+            padding: 10px 20px 20px;
+            color: white;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .ad-bar {
+            background: #1f2937;
+            color: white;
+            padding: 10px 16px;
+            font-size: 13px;
+            border-radius: 16px 16px 0 0;
+            margin: 0 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .ad-tag {
+            background: #374151;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+        }
+        .card {
+            background: white;
+            margin: 0 16px;
+            padding: 24px 20px;
+            border-radius: 0 0 16px 16px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        .icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .icon.blue { background: #409eff; }
+        .icon.red { background: #f56c6c; }
+        .icon.orange { background: #e6a23c; }
+        .icon.purple { background: #722ed1; }
+        .icon.green { background: #00c48c; }
+        .label {
+            font-size: 13px;
+            color: #333;
+            text-align: center;
+            font-weight: 500;
+        }
+        .tabbar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0 24px;
+            border-top: 1px solid #f0f0f0;
+        }
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: #909090;
+            font-size: 12px;
+        }
+        .tab-item.active {
+            color: #409eff;
+        }
+        .tab-item .icon {
+            width: 24px;
+            height: 24px;
+            background: transparent;
+            font-size: 20px;
+            box-shadow: none;
+        }
+
+        /* 弹窗：所有返回键统一改成极小样式 */
+        .modal {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 70px;
+            background: white;
+            z-index: 10;
+            padding: 20px;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.08);
+        }
+        .modal.active {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        /* 极小返回按钮：28x28 蓝色圆角 */
+        .modal-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .back-btn {
+            width: 28px;
+            height: 28px;
+            background: #409eff;
+            border-radius: 6px;
+            border: none;
+            color: white;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+        }
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        /* 特殊车辆：勾选框移到最左边，文字紧跟在框后面 */
+        .checkbox-row {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            gap: 8px !important;
+            margin-bottom: 16px !important;
+            width:100% !important;
+            text-align: left !important;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #e4e4e4;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+        .modal button {
+            width: 100%;
+            padding: 15px;
+            background: #409eff;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        .msg {
+            margin-top: 12px;
+            padding: 12px;
+            background: #f5f9ff;
+            border-radius: 8px;
+            color: #409eff;
+            font-size: 14px;
+        }
+        .spot-grid {
+            display: grid;
+            grid-template-columns: repeat(3,1fr);
+            gap: 12px;
+        }
+        .spot {
+            padding: 18px 0;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 15px;
+            font-weight: 500;
+        }
+        .available { background: #edf7ff; color: #0088cc; }
+        .occupied { background: #fff0f0; color: #f56c6c; }
+        .reserved { background: #fff7e6; color: #e69f00; }
+        .special { border: 2px solid #409eff; }
+    </style>
+</head>
+<body>
+<div class="phone">
+    <div class="status-bar">
+        <div class="location">珠海</div>
+        <div> 📶 🔋</div>
+    </div>
+
+    <div class="header">
+        <h1>停车更方便</h1>
+        <p>快速缴费，找车</p>
+    </div>
+
+    <div class="ad-bar">
+        <span class="ad-tag">广告</span>
+        <span>找车位，用XXX，方便快捷停车更方便</span>
+    </div>
+
+    <div class="card">
+        <div class="grid">
+            <div class="item" onclick="openModal('reserve')">
+                <div class="icon purple">📅</div>
+                <div class="label">停车预约</div>
+            </div>
+
+            <!-- 只新增这一个按钮，样式完全沿用你的 -->
+            <div class="item" onclick="openModal('enter')">
+                <div class="icon green">✅</div>
+                <div class="label">确认入场</div>
+            </div>
+
+            <div class="item" onclick="openModal('spot')">
+                <div class="icon red">P</div>
+                <div class="label">空泊位导航</div>
+            </div>
+
+            <div class="item" onclick="openModal('find')">
+                <div class="icon blue">🚗</div>
+                <div class="label">便捷寻车</div>
+            </div>
+
+            <div class="item" onclick="openModal('pay')">
+                <div class="icon green">🅿️</div>
+                <div class="label">停车缴费</div>
+            </div>
+            <div class="item" onclick="location.href='/records'">
+                <div class="icon orange">📋</div>
+                <div class="label">收费记录</div>
+            </div>
+            <div class="item" onclick="location.href='/stats'">
+                <div class="icon blue">📊</div>
+                <div class="label">数据统计</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tabbar">
+        <div class="tab-item active" onclick="location.href='/'">
+            <div class="icon">🏠</div><div>首页</div>
+        </div>
+
+        <div class="tab-item" onclick="location.href='/stats'">
+            <div class="icon">👤</div><div>我的</div>
+        </div>
+    </div>
+
+    <!-- 停车预约弹窗：特殊车辆框移到最左边，文字紧跟 -->
+    <div class="modal" id="reserve">
+        <div class="modal-header">
+            <button class="back-btn" onclick="closeModal()">←</button>
+            <div class="modal-title">停车预约</div>
+        </div>
+        <input placeholder="输入车牌" id="r_plate">
+        <div class="checkbox-row">
+            <input type="checkbox" id="r_special">
+            <label>特殊车辆</label>
+        </div>
+        <button onclick="doReserve()">确认预约</button>
+        <div class="msg" id="r_msg"></div>
+
+    </div>
+
+    <!-- 确认入场弹窗【只新增，样式100%沿用你的】 -->
+    <div class="modal" id="enter">
+        <div class="modal-header">
+            <button class="back-btn" onclick="closeModal()">←</button>
+            <div class="modal-title">确认入场</div>
+        </div>
+        <input placeholder="输入车牌" id="e_plate">
+        <div class="checkbox-row">
+            <input type="checkbox" id="e_special">
+            <label>特殊车辆</label>
+        </div>
+        <button onclick="doEnter()">确认入场</button>
+        <div class="msg" id="e_msg"></div>
+    </div>
+
+    <!-- 空泊位导航弹窗：返回键修改 -->
+    <div class="modal" id="spot">
+        <div class="modal-header">
+            <button class="back-btn" onclick="closeModal()">←</button>
+            <div class="modal-title">空泊位导航</div>
+        </div>
+        <div class="spot-grid" id="spot_grid"></div>
+    </div>
+
+    <!-- 便捷寻车弹窗：返回键修改 -->
+    <div class="modal" id="find">
+        <div class="modal-header">
+            <button class="back-btn" onclick="closeModal()">←</button>
+            <div class="modal-title">便捷寻车</div>
+        </div>
+        <input placeholder="输入车牌" id="f_plate">
+        <button onclick="doFindCar()">查询位置</button>
+        <div class="msg" id="f_msg"></div>
+    </div>
+
+    <!-- 停车缴费弹窗：返回键修改 -->
+    <div class="modal" id="pay">
+        <div class="modal-header">
+            <button class="back-btn" onclick="closeModal()">←</button>
+            <div class="modal-title">停车缴费</div>
+        </div>
+        <input placeholder="输入车牌" id="p_plate">
+        <button onclick="doExit()">确认缴费离场</button>
+        <div class="msg" id="p_msg"></div>
+    </div>
+</div>
+
+<script>
+let currentModal = null;
+function openModal(id) {
+    closeModal();
+    let m = document.getElementById(id);
+    m.classList.add('active');
+    currentModal = m;
+    if(id === 'spot') loadSpot();
+}
+function closeModal() {
+    if(currentModal) currentModal.classList.remove('active');
+    currentModal = null;
+}
+async function loadSpot() {
+    let r = await fetch('/spot');
+    let d = await r.json();
+    let g = document.getElementById('spot_grid');
+    g.innerHTML = '';
+    d.spots.forEach(s => {
+        let div = document.createElement('div');
+        div.className = 'spot ' + s.status;
+        if(d.special.includes(s.id)) div.classList.add('special');
+        div.innerText = s.id;
+        g.appendChild(div);
+    });
+}
+async function doReserve() {
+    let p = document.getElementById('r_plate').value;
+    let s = document.getElementById('r_special').checked ? 1 : 0;
+    let res = await fetch('/reserve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `plate=${p}&special=${s}`
+    });
+    let d = await res.json();
+    document.getElementById('r_msg').innerText = d.msg;
+}
+
+// 只新增这个函数，其他完全不动
+async function doEnter() {
+    let p = document.getElementById('e_plate').value;
+    let s = document.getElementById('e_special').checked ? 1 : 0;
+    let res = await fetch('/enter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `plate=${p}&special=${s}`
+    });
+    let d = await res.json();
+    document.getElementById('e_msg').innerText = d.msg;
+}
+
+async function doFindCar() {
+    let p = document.getElementById('f_plate').value;
+    let res = await fetch('/find_car', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `plate=${p}`
+    });
+    let d = await res.json();
+    document.getElementById('f_msg').innerText = d.msg;
+}
+
+async function doExit() {
+    let p = document.getElementById('p_plate').value;
+    let res = await fetch('/exit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `plate=${p}`
+    });
+    let d = await res.json();
+
+    let text = d.msg;
+    if (d.code === 0) {
+        // 只有特殊车辆才显示「特殊车辆无需缴费」
+        if (d.is_special === 1) {
+            text = "离场成功\n特殊车辆无需缴费";
+        }
+        if (d.entry_time) {
+            text += "\n入场时间：" + d.entry_time;
+        }
+        if (d.exit_time) {
+            text += "\n离场时间：" + d.exit_time;
+        }
+        if (d.duration !== undefined) {
+            text += "\n停车时长：" + d.duration + " 分钟";
+        }
+        // 🔥 不管 fee 是不是0，都显示（特殊车也会显示 0 元）
+        if (d.fee !== undefined) {
+            text += "\n需缴费：" + d.fee + " 元";
+        }
+    }
+    document.getElementById('p_msg').innerText = text;
+}
+</script>
+</body>
+</html>
