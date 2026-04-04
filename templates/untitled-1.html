@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据统计</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            background-color: #1890ff;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            font-size: 18px;
+        }
+        .header a {
+            color: white;
+            text-decoration: none;
+            font-size: 24px;
+            margin-right: 15px;
+        }
+        .chart-container {
+            background: white;
+            margin: 20px;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        canvas {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="javascript:history.back()">&larr;</a>
+        <span>数据统计</span>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="statsChart"></canvas>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api/stats')
+                .then(response => response.json())
+                .then(data => {
+                    const ctx = document.getElementById('statsChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.labels,
+                            datasets: [{
+                                label: '车辆数',
+                                data: data.vehicle_data,
+                                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    title: {
+                                        display: true,
+                                        text: '车辆数'
+                                    }
+                                }
+                            },
+                            plugins: {
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            let label = context.dataset.label || '';
+                                            if (label) {
+                                                label += ': ';
+                                            }
+                                            if (context.parsed.y !== null) {
+                                                label += context.parsed.y;
+                                            }
+                                            return label;
+                                        },
+                                        afterLabel: function(context) {
+                                            const revenue = data.revenue_data[context.dataIndex];
+                                            return `收入: ${revenue.toFixed(2)}元`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching stats data:', error);
+                    const container = document.querySelector('.chart-container');
+                    container.innerHTML = '<p style="color: red; text-align: center;">加载图表数据失败，请稍后重试。</p>';
+                });
+        });
+    </script>
+
+</body>
+</html>

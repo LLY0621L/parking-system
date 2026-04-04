@@ -12,26 +12,44 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
         body {
-            background: #ffffff;
+            background: #f0f2f5; /* Changed background to make phone pop */
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: center; /* Corrected alignment property */
             height: 100vh;
+        }
+        .mobile-frame {
+            background: #111;
+            padding: 10px; /* Reduced border thickness */
+            border-radius: 35px; /* Adjusted for new padding */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); /* Softened shadow */
         }
         .phone {
             width: 360px;
-            height: 640px;
-            background: #409eff;
+            height: 780px; /* Changed from 640px to match 19.5:9 ratio */
+            background: #5cadff; /* A lighter blue background */
             overflow: hidden;
             position: relative;
-            box-shadow: 0 0 30px rgba(0,0,0,0.2);
-            border-radius: 20px;
+            border-radius: 25px; /* Adjusted to fit inside the frame */
+            display: flex;
+            flex-direction: column;
+            padding-top: 30px; /* Pushed content down */
+            box-sizing: border-box; /* Ensure padding is included in height */
+        }
+        .bg-car {
+            position: absolute;
+            top: 90px; /* Moved car up by 20px */
+            right: 20px;
+            width: 180px; /* Made car larger */
+            opacity: 0.2;
+            pointer-events: none;
+            z-index: 1;
         }
         .status-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 16px;
+            padding: 0 16px; /* Moved icons to the absolute top */
             color: white;
             font-size: 16px;
         }
@@ -44,8 +62,11 @@
             content: "📍";
         }
         .header {
-            padding: 10px 20px 20px;
+            padding: 50px 20px 20px; /* Pushed text down by 15px */
             color: white;
+            flex-shrink: 0;
+            z-index: 2;
+            display: block; /* Explicitly set display for toggling */
         }
         .header h1 {
             font-size: 28px;
@@ -55,6 +76,14 @@
         .header p {
             font-size: 14px;
             opacity: 0.9;
+        }
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            padding-top: 45px; /* Moved content down by 15px */
+            position: relative;
+            z-index: 2;
         }
         .ad-bar {
             background: #1f2937;
@@ -79,8 +108,7 @@
             padding: 24px 20px;
             border-radius: 0 0 16px 16px;
             box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-            flex-grow: 1;
-            overflow-y: auto;
+            /* flex-grow and overflow removed to allow natural height and bottom blue space */
         }
         .grid {
             display: grid;
@@ -92,7 +120,7 @@
             flex-direction: column;
             align-items: center;
             gap: 8px;
-            cursor: pointer;
+            cursor: pointer; /* Add pointer cursor */
         }
         .icon {
             width: 52px;
@@ -117,10 +145,7 @@
             font-weight: 500;
         }
         .tabbar {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            margin-top: auto; /* Pushes tabbar to the bottom */
             background: white;
             display: flex;
             justify-content: space-around;
@@ -146,73 +171,83 @@
             box-shadow: none;
         }
 
-        /* 弹窗：所有返回键统一改成极小样式 */
+        /* --- Modal Styles --- */
         .modal {
-            display: none;
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 70px;
-            background: white;
-            z-index: 10;
-            padding: 20px;
-            border-radius: 20px 20px 0 0;
-            box-shadow: 0 -4px 15px rgba(0,0,0,0.08);
-        }
-        .modal.active {
-            display: block;
-            animation: slideUp 0.3s ease;
-        }
-        @keyframes slideUp {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0); }
-        }
-
-        /* 极小返回按钮：28x28 蓝色圆角 */
-        .modal-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .back-btn {
-            width: 28px;
-            height: 28px;
-            background: #409eff;
-            border-radius: 6px;
-            border: none;
-            color: white;
-            font-size: 14px;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 10px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+        .modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            width: 90%;
+            max-width: 340px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+            transform: scale(0.95);
+            opacity: 0;
+            transition: all 0.3s ease;
+            overflow: hidden; /* CRITICAL FIX: This ensures the header corners are clipped correctly */
+        }
+        .modal.active .modal-content {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            background: #409eff;
+            color: white;
+            padding: 12px 15px;
+            margin: -20px -20px 20px; /* Use negative margin to create the full-width bar */
+        }
+        .back-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 0;
+            margin-right: 15px;
+            cursor: pointer;
         }
         .modal-title {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 600;
+            color: white;
         }
-
-        /* 特殊车辆：勾选框移到最左边，文字紧跟在框后面 */
-        .checkbox-row {
-            display: flex !important;
-            align-items: center !important;
-            justify-content: flex-start !important;
-            gap: 8px !important;
-            margin-bottom: 16px !important;
-            width:100% !important;
-            text-align: left !important;
+        .form-group {
+            margin-bottom: 15px;
         }
-
-        .modal input {
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #606266;
+            font-size: 14px;
+        }
+        .form-group input, .modal-body input {
             width: 100%;
-            padding: 14px 16px;
-            border: 1px solid #e4e4e4;
-            border-radius: 12px;
-            margin-bottom: 12px;
+            padding: 12px 15px;
+            border: 1px solid #dcdfe6;
+            border-radius: 8px;
             font-size: 15px;
+            margin-bottom: 12px;
         }
-        .modal button {
+        .btn-primary {
             width: 100%;
             padding: 15px;
             background: #409eff;
@@ -221,6 +256,17 @@
             border-radius: 12px;
             font-size: 16px;
             font-weight: 500;
+            cursor: pointer;
+        }
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .checkbox-row input {
+            width: auto;
+            margin-bottom: 0;
         }
         .msg {
             margin-top: 12px;
@@ -246,149 +292,474 @@
         .occupied { background: #fff0f0; color: #f56c6c; }
         .reserved { background: #fff7e6; color: #e69f00; }
         .special { border: 2px solid #409eff; }
+
+        /* --- Page Styles --- */
+        .page {
+            display: none; /* Hide pages by default */
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: #409eff;
+        }
+        .page.active {
+            display: flex; /* Show active page */
+        }
+        .records-header {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: white;
+            flex-shrink: 0;
+            padding-top: 20px; /* Align with status bar */
+        }
+        .records-header .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .records-list {
+            flex-grow: 1;
+            background: white;
+            list-style: none;
+            padding: 10px;
+            margin: 0;
+            overflow-y: auto;
+            border-radius: 16px 16px 0 0;
+        }
+        .records-list li {
+            padding: 15px 10px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+        .records-tabs {
+            display: flex;
+            background: #409eff;
+            padding: 0 20px 10px;
+        }
+        .tab-button {
+            flex: 1;
+            padding: 10px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            opacity: 0.7;
+            border-bottom: 2px solid transparent;
+        }
+        .tab-button.active {
+            opacity: 1;
+            font-weight: 600;
+            border-bottom-color: white;
+        }
+        .records-content {
+            flex-grow: 1;
+            background: #f0f2f5;
+            padding: 10px;
+            overflow-y: auto;
+            border-radius: 16px 16px 0 0;
+        }
+        #personal-records-section {
+            display: none; /* Hidden by default */
+        }
+        .search-form {
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+        }
+        .search-form input {
+            flex-grow: 1;
+            padding: 12px 15px;
+            border: 1px solid #dcdfe6;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+        .search-form button {
+            padding: 12px 20px;
+            background: #409eff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .record-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .record-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .record-card-plate {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .record-card-fee {
+            font-weight: bold;
+            font-size: 18px;
+            color: #f56c6c;
+        }
+        .record-card-body {
+            font-size: 13px;
+            color: #606266;
+            line-height: 1.6;
+        }
+        .record-card-body div {
+            display: flex;
+            justify-content: space-between;
+        }
+        .record-card-body span:first-child {
+            color: #909399;
+        }
+        .no-records {
+            text-align: center;
+            padding: 40px;
+            color: #909399;
+        }
+
+        .stats-content {
+            flex-grow: 1;
+            background: white;
+            padding: 20px;
+            border-radius: 16px 16px 0 0;
+        }
+        .no-stats-placeholder {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            color: #909399;
+        }
+        .stats-icon {
+            font-size: 60px;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f4f4f5;
+            border-radius: 20px;
+            margin-bottom: 20px;
+        }
+        .stats-primary-text {
+            font-size: 16px;
+            color: #303133;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        .stats-secondary-text {
+            font-size: 14px;
+        }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 </head>
 <body>
-<div class="phone">
-    <div class="status-bar">
-        <div class="location">珠海</div>
-        <div> 📶 🔋</div>
-    </div>
-
-    <div class="header">
-        <h1>停车更方便</h1>
-        <p>快速缴费，找车</p>
-    </div>
-
-    <div class="ad-bar">
-        <span class="ad-tag">广告</span>
-        <span>找车位，用XXX，方便快捷停车更方便</span>
-    </div>
-
-    <div class="card">
-        <div class="grid">
-            <div class="item" onclick="openModal('reserve')">
-                <div class="icon purple">📅</div>
-                <div class="label">停车预约</div>
+<div class="mobile-frame">
+    <div class="phone">
+        <!-- Page 1: Main -->
+        <div id="main-page" class="page active">
+            <div class="status-bar">
+                <div class="location">珠海</div>
+                <div> 📶 🔋</div>
             </div>
 
-            <!-- 只新增这一个按钮，样式完全沿用你的 -->
-            <div class="item" onclick="openModal('enter')">
-                <div class="icon green">✅</div>
-                <div class="label">确认入场</div>
+            <img class="bg-car" src="https://www.freepnglogos.com/uploads/car-png/car-png-large-images-40.png" alt="Car illustration">
+
+            <div class="header">
+            <h1>停车更方便</h1>
+            <p>快速缴费，找车</p>
+        </div>
+
+            <div class="main-content">
+                <div class="ad-bar">
+                <span class="ad-tag">广告</span>
+                <span>找车位，用XXX，方便快捷停车更方便</span>
             </div>
 
-            <div class="item" onclick="openModal('spot')">
-                <div class="icon red">P</div>
-                <div class="label">空泊位导航</div>
+            <div class="card">
+                <div class="grid">
+                    <div class="item" onclick="openModal('reserve')">
+                        <div class="icon purple">📅</div>
+                        <div class="label">停车预约</div>
+                    </div>
+
+                    <div class="item" onclick="openModal('enter')">
+                        <div class="icon green">✅</div>
+                        <div class="label">确认入场</div>
+                    </div>
+
+                    <div class="item" onclick="openModal('spot')">
+                        <div class="icon red">P</div>
+                        <div class="label">空泊位导航</div>
+                    </div>
+
+                    <div class="item" onclick="openModal('find')">
+                        <div class="icon blue">🚗</div>
+                        <div class="label">便捷寻车</div>
+                    </div>
+
+                    <div class="item" onclick="openModal('pay')">
+                        <div class="icon green">🅿️</div>
+                        <div class="label">停车缴费</div>
+                    </div>
+                    <div class="item" onclick="showPage('records-page')">
+                        <div class="icon orange">📋</div>
+                        <div class="label">收费记录</div>
+                    </div>
+                    <div class="item" onclick="showPage('stats-page')">
+                        <div class="icon blue">📊</div>
+                        <div class="label">数据统计</div>
+                    </div>
+                </div>
             </div>
-
-            <div class="item" onclick="openModal('find')">
-                <div class="icon blue">🚗</div>
-                <div class="label">便捷寻车</div>
-            </div>
-
-            <div class="item" onclick="openModal('pay')">
-                <div class="icon green">🅿️</div>
-                <div class="label">停车缴费</div>
-            </div>
-            <div class="item" onclick="location.href='/records'">
-                <div class="icon orange">📋</div>
-                <div class="label">收费记录</div>
-            </div>
-            <div class="item" onclick="location.href='/stats'">
-                <div class="icon blue">📊</div>
-                <div class="label">数据统计</div>
             </div>
         </div>
-    </div>
 
-    <div class="tabbar">
-        <div class="tab-item active" onclick="location.href='/'">
-            <div class="icon">🏠</div><div>首页</div>
+        <!-- Page 2: Records -->
+        <div id="records-page" class="page">
+            <div class="status-bar">
+                 <div class="location">珠海</div>
+                 <div> 📶 🔋</div>
+            </div>
+            <div class="records-header">
+                <button class="back-btn" onclick="showPage('main-page')">←</button>
+                <h2 class="modal-title">收费记录</h2>
+            </div>
+            <div class="records-tabs">
+                <button id="tab-all" class="tab-button active" onclick="switchRecordTab('all')">所有车辆</button>
+                <button id="tab-personal" class="tab-button" onclick="switchRecordTab('personal')">个人查询</button>
+            </div>
+            <div class="records-content">
+                <div id="all-records-section">
+                    <div id="all_records_list"></div>
+                </div>
+                <div id="personal-records-section">
+                    <div class="search-form">
+                        <input type="text" id="personal_plate_input" placeholder="请输入车牌号">
+                        <button onclick="searchPersonalRecords()">查询</button>
+                    </div>
+                    <div id="personal_records_list"></div>
+                </div>
+            </div>
         </div>
 
-        <div class="tab-item" onclick="location.href='/stats'">
-            <div class="icon">👤</div><div>我的</div>
+        <!-- Page 3: Stats -->
+        <div id="stats-page" class="page">
+            <div class="status-bar">
+                 <div class="location">珠海</div>
+                 <div> 📶 🔋</div>
+            </div>
+            <div class="records-header">
+                <button class="back-btn" onclick="showPage('main-page')">←</button>
+                <h2 class="modal-title">数据统计</h2>
+            </div>
+            <div class="stats-content">
+                <div id="stats-chart-container" style="width: 100%; height: 400px; display: none;"></div>
+                <div id="no-stats-data" class="no-stats-placeholder">
+                    <div class="stats-icon">📊</div>
+                    <p class="stats-primary-text">暂无停车数据</p>
+                    <p class="stats-secondary-text">产生停车记录后将自动显示图表</p>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <!-- 停车预约弹窗：特殊车辆框移到最左边，文字紧跟 -->
-    <div class="modal" id="reserve">
-        <div class="modal-header">
-            <button class="back-btn" onclick="closeModal()">←</button>
-            <div class="modal-title">停车预约</div>
+        <!-- Modals remain outside the pages but inside the phone -->
+        <div class="modal" id="reserve">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button class="back-btn" onclick="closeModal('reserve')">←</button>
+                    <h2 class="modal-title">停车预约</h2>
+                </div>
+                <div class="form-group">
+                    <label for="r_plate">车牌号</label>
+                    <input id="r_plate" placeholder="输入车牌">
+                </div>
+                <div class="checkbox-row">
+                    <input type="checkbox" id="r_special">
+                    <label for="r_special">特殊车辆</label>
+                </div>
+                <button class="btn-primary" onclick="doReserve()">确认预约</button>
+                <div class="msg" id="r_msg"></div>
+            </div>
         </div>
-        <input placeholder="输入车牌" id="r_plate">
-        <div class="checkbox-row">
-            <input type="checkbox" id="r_special">
-            <label>特殊车辆</label>
+        <div class="modal" id="enter">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button class="back-btn" onclick="closeModal('enter')">←</button>
+                    <h2 class="modal-title">确认入场</h2>
+                </div>
+                <div class="form-group">
+                    <label for="e_plate">车牌号</label>
+                    <input placeholder="输入车牌" id="e_plate">
+                </div>
+                <div class="checkbox-row">
+                    <input type="checkbox" id="e_special">
+                    <label for="e_special">特殊车辆</label>
+                </div>
+                <button class="btn-primary" onclick="doEnter()">确认入场</button>
+                <div class="msg" id="e_msg"></div>
+            </div>
         </div>
-        <button onclick="doReserve()">确认预约</button>
-        <div class="msg" id="r_msg"></div>
-
-    </div>
-
-    <!-- 确认入场弹窗【只新增，样式100%沿用你的】 -->
-    <div class="modal" id="enter">
-        <div class="modal-header">
-            <button class="back-btn" onclick="closeModal()">←</button>
-            <div class="modal-title">确认入场</div>
+        <div class="modal" id="spot">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button class="back-btn" onclick="closeModal('spot')">←</button>
+                    <h2 class="modal-title">空泊位导航</h2>
+                </div>
+                <div class="spot-grid" id="spot_grid"></div>
+            </div>
         </div>
-        <input placeholder="输入车牌" id="e_plate">
-        <div class="checkbox-row">
-            <input type="checkbox" id="e_special">
-            <label>特殊车辆</label>
+        <div class="modal" id="find">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button class="back-btn" onclick="closeModal('find')">←</button>
+                    <h2 class="modal-title">便捷寻车</h2>
+                </div>
+                <div class="form-group">
+                    <label for="f_plate">车牌号</label>
+                    <input placeholder="输入车牌" id="f_plate">
+                </div>
+                <button class="btn-primary" onclick="doFindCar()">查询位置</button>
+                <div class="msg" id="f_msg"></div>
+            </div>
         </div>
-        <button onclick="doEnter()">确认入场</button>
-        <div class="msg" id="e_msg"></div>
-    </div>
-
-    <!-- 空泊位导航弹窗：返回键修改 -->
-    <div class="modal" id="spot">
-        <div class="modal-header">
-            <button class="back-btn" onclick="closeModal()">←</button>
-            <div class="modal-title">空泊位导航</div>
+        <div class="modal" id="pay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button class="back-btn" onclick="closeModal('pay')">←</button>
+                    <h2 class="modal-title">停车缴费</h2>
+                </div>
+                <div class="form-group">
+                    <label for="p_plate">车牌号</label>
+                    <input placeholder="输入车牌" id="p_plate">
+                </div>
+                <button class="btn-primary" onclick="doExit()">确认缴费离场</button>
+                <div class="msg" id="p_msg"></div>
+            </div>
         </div>
-        <div class="spot-grid" id="spot_grid"></div>
-    </div>
-
-    <!-- 便捷寻车弹窗：返回键修改 -->
-    <div class="modal" id="find">
-        <div class="modal-header">
-            <button class="back-btn" onclick="closeModal()">←</button>
-            <div class="modal-title">便捷寻车</div>
-        </div>
-        <input placeholder="输入车牌" id="f_plate">
-        <button onclick="doFindCar()">查询位置</button>
-        <div class="msg" id="f_msg"></div>
-    </div>
-
-    <!-- 停车缴费弹窗：返回键修改 -->
-    <div class="modal" id="pay">
-        <div class="modal-header">
-            <button class="back-btn" onclick="closeModal()">←</button>
-            <div class="modal-title">停车缴费</div>
-        </div>
-        <input placeholder="输入车牌" id="p_plate">
-        <button onclick="doExit()">确认缴费离场</button>
-        <div class="msg" id="p_msg"></div>
     </div>
 </div>
 
 <script>
-let currentModal = null;
-function openModal(id) {
-    closeModal();
-    let m = document.getElementById(id);
-    m.classList.add('active');
-    currentModal = m;
-    if(id === 'spot') loadSpot();
+let currentPage = 'main-page';
+
+function showPage(pageId) {
+    document.getElementById(currentPage).classList.remove('active');
+    document.getElementById(pageId).classList.add('active');
+    currentPage = pageId;
+
+    if (pageId === 'records-page') {
+        // Default to 'all' tab when showing records page
+        switchRecordTab('all');
+    }
+    if (pageId === 'stats-page') {
+        loadStatsChart();
+    }
 }
-function closeModal() {
-    if(currentModal) currentModal.classList.remove('active');
-    currentModal = null;
+
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add('active');
+        if(modalId === 'spot') loadSpot();
+    }
 }
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
+
+function switchRecordTab(tab) {
+    const allTab = document.getElementById('tab-all');
+    const personalTab = document.getElementById('tab-personal');
+    const allSection = document.getElementById('all-records-section');
+    const personalSection = document.getElementById('personal-records-section');
+
+    if (tab === 'all') {
+        allTab.classList.add('active');
+        personalTab.classList.remove('active');
+        allSection.style.display = 'block';
+        personalSection.style.display = 'none';
+        loadRecords('all_records_list'); // Load all records
+    } else {
+        allTab.classList.remove('active');
+        personalTab.classList.add('active');
+        allSection.style.display = 'none';
+        personalSection.style.display = 'block';
+        // Clear personal list until a search is made
+        document.getElementById('personal_records_list').innerHTML = '<div class="no-records">请输入车牌号进行查询</div>';
+    }
+}
+
+function searchPersonalRecords() {
+    const plate = document.getElementById('personal_plate_input').value;
+    if (!plate) {
+        alert('请输入车牌号');
+        return;
+    }
+    loadRecords('personal_records_list', plate);
+}
+
+async function loadRecords(listId, plate = null) {
+    const list = document.getElementById(listId);
+    list.innerHTML = '<div class="no-records">加载中...</div>'; // Show loading indicator
+    let url = '/api/records';
+    if (plate) {
+        url += `?plate=${plate}`;
+    }
+
+    try {
+        const response = await fetch(url);
+        const records = await response.json();
+        list.innerHTML = ''; // Clear list
+
+        if (records && records.length > 0) {
+            records.forEach(rec => {
+                const card = document.createElement('div');
+                card.className = 'record-card';
+
+                const fee = rec.fee !== null ? `¥ ${rec.fee.toFixed(2)}` : '进行中';
+                const entryTime = rec.entry_time || 'N/A';
+                const exitTime = rec.exit_time || 'N/A';
+                const duration = rec.duration_formatted || 'N/A';
+
+                card.innerHTML = `
+                    <div class="record-card-header">
+                        <span class="record-card-plate">${rec.plate}</span>
+                        <span class="record-card-fee">${fee}</span>
+                    </div>
+                    <div class="record-card-body">
+                        <div><span>入场时间</span><span>${entryTime}</span></div>
+                        <div><span>支付时间</span><span>${exitTime}</span></div>
+                        <div><span>停车时长</span><span>${duration}</span></div>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        } else {
+            list.innerHTML = '<div class="no-records">暂无相关记录</div>';
+        }
+    } catch (error) {
+        console.error('Error loading records:', error);
+        list.innerHTML = '<div class="no-records">加载记录失败</div>';
+    }
+}
+
 async function loadSpot() {
     let r = await fetch('/spot');
     let d = await r.json();
@@ -414,7 +785,6 @@ async function doReserve() {
     document.getElementById('r_msg').innerText = d.msg;
 }
 
-// 只新增这个函数，其他完全不动
 async function doEnter() {
     let p = document.getElementById('e_plate').value;
     let s = document.getElementById('e_special').checked ? 1 : 0;
@@ -438,6 +808,168 @@ async function doFindCar() {
     document.getElementById('f_msg').innerText = d.msg;
 }
 
+async function loadStatsChart() {
+    const chartDom = document.getElementById('stats-chart-container');
+    const noDataDom = document.getElementById('no-stats-data');
+    
+    // Ensure ECharts is loaded
+    if (typeof echarts == 'undefined') {
+        console.error('ECharts is not loaded');
+        return;
+    }
+    
+    const myChart = echarts.init(chartDom);
+
+    try {
+        const response = await fetch('/api/stats');
+        const data = await response.json();
+
+        if (data.daily && data.daily.length > 0) {
+            chartDom.style.display = 'block';
+            noDataDom.style.display = 'none';
+
+            const dates = data.daily.map(item => item.d.substring(5)); // Format to MM-DD
+            const counts = data.daily.map(item => item.c);
+            const revenues = data.daily.map(item => item.s);
+
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: function (params) {
+                        const param = params[0];
+                        const revenue = revenues[param.dataIndex];
+                        return `${param.name}<br/>车辆数: ${param.value}<br/>收益: ${revenue}元`;
+                    }
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: dates
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '车辆数'
+                },
+                series: [
+                    {
+                        name: '车辆数',
+                        type: 'line',
+                        data: counts,
+                        smooth: true,
+                        label: {
+                            show: true,
+                            position: 'top',
+                            formatter: function (params) {
+                                const revenue = revenues[params.dataIndex];
+                                return `${revenue}元`;
+                            },
+                            color: '#303133',
+                            fontWeight: 'bold'
+                        },
+                        areaStyle: {}
+                    }
+                ]
+            };
+            myChart.setOption(option);
+        } else {
+            // No data
+            chartDom.style.display = 'none';
+            noDataDom.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error loading stats chart:', error);
+        chartDom.style.display = 'none';
+        noDataDom.style.display = 'block';
+    }
+}
+
+async function loadStatsChart() {
+    const chartDom = document.getElementById('stats-chart-container');
+    const noDataDom = document.getElementById('no-stats-data');
+    
+    // Ensure ECharts is loaded
+    if (typeof echarts == 'undefined') {
+        console.error('ECharts is not loaded');
+        return;
+    }
+    
+    const myChart = echarts.init(chartDom);
+
+    try {
+        const response = await fetch('/api/stats');
+        const data = await response.json();
+
+        if (data.daily && data.daily.length > 0) {
+            chartDom.style.display = 'block';
+            noDataDom.style.display = 'none';
+
+            const dates = data.daily.map(item => item.d.substring(5)); // Format to MM-DD
+            const counts = data.daily.map(item => item.c);
+            const revenues = data.daily.map(item => item.s);
+
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: function (params) {
+                        const param = params[0];
+                        const revenue = revenues[param.dataIndex];
+                        return `${param.name}<br/>车辆数: ${param.value}<br/>收益: ${revenue}元`;
+                    }
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: dates
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '车辆数'
+                },
+                series: [
+                    {
+                        name: '车辆数',
+                        type: 'line',
+                        data: counts,
+                        smooth: true,
+                        label: {
+                            show: true,
+                            position: 'top',
+                            formatter: function (params) {
+                                const revenue = revenues[params.dataIndex];
+                                return `${revenue}元`;
+                            },
+                            color: '#303133',
+                            fontWeight: 'bold'
+                        },
+                        areaStyle: {}
+                    }
+                ]
+            };
+            myChart.setOption(option);
+        } else {
+            // No data
+            chartDom.style.display = 'none';
+            noDataDom.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error loading stats chart:', error);
+        chartDom.style.display = 'none';
+        noDataDom.style.display = 'block';
+    }
+}
+
 async function doExit() {
     let p = document.getElementById('p_plate').value;
     let res = await fetch('/exit', {
@@ -449,7 +981,6 @@ async function doExit() {
 
     let text = d.msg;
     if (d.code === 0) {
-        // 只有特殊车辆才显示「特殊车辆无需缴费」
         if (d.is_special === 1) {
             text = "离场成功\n特殊车辆无需缴费";
         }
@@ -462,7 +993,6 @@ async function doExit() {
         if (d.duration !== undefined) {
             text += "\n停车时长：" + d.duration + " 分钟";
         }
-        // 🔥 不管 fee 是不是0，都显示（特殊车也会显示 0 元）
         if (d.fee !== undefined) {
             text += "\n需缴费：" + d.fee + " 元";
         }

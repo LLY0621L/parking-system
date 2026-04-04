@@ -1,5 +1,6 @@
 import sqlite3
 import datetime
+import math
 from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
@@ -11,9 +12,8 @@ NORMAL_SPOTS = 10
 SPECIAL_SPOTS = 2
 SPOT_LAYOUT = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
 SPECIAL_SPOT_IDS = [11, 12]
-FREE_MINUTES = 30
-RATE_PER_HOUR = 5
-RESERVE_TIMEOUT = 15
+RATE_PER_MINUTE = 2  # 每分钟收费2元
+RESERVE_TIMEOUT = 2 # 预约保留2分钟
 
 
 # 数据库连接
@@ -69,13 +69,19 @@ def find_nearest_spot(is_special=False):
 
 # 计费
 def calc_fee(ent, ext, special):
-    if special: return 0.0
-    sec = (ext - ent).total_seconds()
-    min = sec / 60
-    if min <= FREE_MINUTES: return 0.0
-    h = int(min / 60)
-    if min % 60 > 0: h += 1
-    return h * RATE_PER_HOUR
+    if special:
+        return 0.0
+
+    seconds = (ext - ent).total_seconds()
+
+    # 规则：一分钟内免费
+    if seconds <= 60:
+        return 0.0
+
+    # 规则：超过一分钟，按分钟向上取整计费
+    # 例如：1分30秒，按2分钟计费
+    minutes = math.ceil(seconds / 60)
+    return minutes * RATE_PER_MINUTE
 
 
 # 释放超时预约
@@ -222,11 +228,48 @@ def records():
 
 @app.route('/api/records')
 def api_records():
+    plate = request.args.get('plate', None)
     conn = get_db()
     c = conn.cursor()
-    c.execute("SELECT * FROM records ORDER BY id DESC")
-    data = [dict(x) for x in c.fetchall()]
+    
+    query = """
+        SELECT 
+            plate,
+            spot_id,
+            entry_time,
+            exit_time,
+            fee,
+            (strftime('%s', exit_time) - strftime('%s', entry_time)) as duration_seconds
+        FROM records 
+        WHERE paid = 1
+    """
+    params = []
+
+    if plate:
+        query += " AND plate = ?"
+        params.append(plate)
+
+    query += " ORDER BY id DESC"
+
+    c.execute(query, params)
+    
+    data = [dict(row) for row in c.fetchall()]
     conn.close()
+    
+    # Format duration for display
+    for row in data:
+        if row['duration_seconds']:
+            total_seconds = int(row['duration_seconds'])
+            hours = total_seconds // 3600
+            minutes = (total_seconds % 3600) // 60
+            seconds = total_seconds % 60
+            if hours > 0:
+                row['duration_formatted'] = f"{hours}小时{minutes}分钟{seconds}秒"
+            else:
+                row['duration_formatted'] = f"{minutes}分钟{seconds}秒"
+        else:
+            row['duration_formatted'] = "进行中"
+
     return jsonify(data)
 
 
