@@ -665,7 +665,7 @@ function showPage(pageId) {
         switchRecordTab('all');
     }
     if (pageId === 'stats-page') {
-        loadStatsChart();
+        loadStats();
     }
 }
 
@@ -808,37 +808,38 @@ async function doFindCar() {
     document.getElementById('f_msg').innerText = d.msg;
 }
 
-async function loadStatsChart() {
-    const chartDom = document.getElementById('stats-chart-container');
-    const noDataDom = document.getElementById('no-stats-data');
-    
+let statsChart;
+async function loadStats() {
+    const chartContainer = document.getElementById('stats-chart-container');
+    const noDataPlaceholder = document.getElementById('no-stats-data');
+
     // Ensure ECharts is loaded
     if (typeof echarts == 'undefined') {
         console.error('ECharts is not loaded');
         return;
     }
-    
-    const myChart = echarts.init(chartDom);
 
     try {
         const response = await fetch('/api/stats');
         const data = await response.json();
 
-        if (data.daily && data.daily.length > 0) {
-            chartDom.style.display = 'block';
-            noDataDom.style.display = 'none';
+        const hasData = data.vehicle_data && data.vehicle_data.some(d => d > 0);
 
-            const dates = data.daily.map(item => item.d.substring(5)); // Format to MM-DD
-            const counts = data.daily.map(item => item.c);
-            const revenues = data.daily.map(item => item.s);
+        if (hasData) {
+            chartContainer.style.display = 'block';
+            noDataPlaceholder.style.display = 'none';
 
+            if (statsChart) {
+                statsChart.dispose();
+            }
+            statsChart = echarts.init(chartContainer);
             const option = {
                 tooltip: {
                     trigger: 'axis',
                     formatter: function (params) {
-                        const param = params[0];
-                        const revenue = revenues[param.dataIndex];
-                        return `${param.name}<br/>车辆数: ${param.value}<br/>收益: ${revenue}元`;
+                        const dataIndex = params[0].dataIndex;
+                        const revenue = data.revenue_data[dataIndex];
+                        return `${params[0].name}<br/>车辆数: ${params[0].value}<br/>收入: ${revenue.toFixed(2)}元`;
                     }
                 },
                 grid: {
@@ -849,155 +850,68 @@ async function loadStatsChart() {
                 },
                 xAxis: {
                     type: 'category',
-                    boundaryGap: false,
-                    data: dates
+                    data: data.labels
                 },
                 yAxis: {
                     type: 'value',
                     name: '车辆数'
                 },
-                series: [
-                    {
-                        name: '车辆数',
-                        type: 'line',
-                        data: counts,
-                        smooth: true,
-                        label: {
-                            show: true,
-                            position: 'top',
-                            formatter: function (params) {
-                                const revenue = revenues[params.dataIndex];
-                                return `${revenue}元`;
-                            },
-                            color: '#303133',
-                            fontWeight: 'bold'
-                        },
-                        areaStyle: {}
-                    }
-                ]
+                series: [{
+                    data: data.vehicle_data,
+                    type: 'line',
+                    smooth: true,
+                    areaStyle: {}
+                }]
             };
-            myChart.setOption(option);
+            statsChart.setOption(option);
         } else {
-            // No data
-            chartDom.style.display = 'none';
-            noDataDom.style.display = 'block';
+            chartContainer.style.display = 'none';
+            noDataPlaceholder.style.display = 'flex';
         }
     } catch (error) {
-        console.error('Error loading stats chart:', error);
-        chartDom.style.display = 'none';
-        noDataDom.style.display = 'block';
-    }
-}
-
-async function loadStatsChart() {
-    const chartDom = document.getElementById('stats-chart-container');
-    const noDataDom = document.getElementById('no-stats-data');
-    
-    // Ensure ECharts is loaded
-    if (typeof echarts == 'undefined') {
-        console.error('ECharts is not loaded');
-        return;
-    }
-    
-    const myChart = echarts.init(chartDom);
-
-    try {
-        const response = await fetch('/api/stats');
-        const data = await response.json();
-
-        if (data.daily && data.daily.length > 0) {
-            chartDom.style.display = 'block';
-            noDataDom.style.display = 'none';
-
-            const dates = data.daily.map(item => item.d.substring(5)); // Format to MM-DD
-            const counts = data.daily.map(item => item.c);
-            const revenues = data.daily.map(item => item.s);
-
-            const option = {
-                tooltip: {
-                    trigger: 'axis',
-                    formatter: function (params) {
-                        const param = params[0];
-                        const revenue = revenues[param.dataIndex];
-                        return `${param.name}<br/>车辆数: ${param.value}<br/>收益: ${revenue}元`;
-                    }
-                },
-                grid: {
-                    left: '3%',
-                    right: '4%',
-                    bottom: '3%',
-                    containLabel: true
-                },
-                xAxis: {
-                    type: 'category',
-                    boundaryGap: false,
-                    data: dates
-                },
-                yAxis: {
-                    type: 'value',
-                    name: '车辆数'
-                },
-                series: [
-                    {
-                        name: '车辆数',
-                        type: 'line',
-                        data: counts,
-                        smooth: true,
-                        label: {
-                            show: true,
-                            position: 'top',
-                            formatter: function (params) {
-                                const revenue = revenues[params.dataIndex];
-                                return `${revenue}元`;
-                            },
-                            color: '#303133',
-                            fontWeight: 'bold'
-                        },
-                        areaStyle: {}
-                    }
-                ]
-            };
-            myChart.setOption(option);
-        } else {
-            // No data
-            chartDom.style.display = 'none';
-            noDataDom.style.display = 'block';
-        }
-    } catch (error) {
-        console.error('Error loading stats chart:', error);
-        chartDom.style.display = 'none';
-        noDataDom.style.display = 'block';
+        console.error('Error loading stats:', error);
+        chartContainer.style.display = 'none';
+        noDataPlaceholder.style.display = 'flex';
+        noDataPlaceholder.querySelector('.stats-primary-text').textContent = '加载数据失败';
     }
 }
 
 async function doExit() {
-    let p = document.getElementById('p_plate').value;
-    let res = await fetch('/exit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `plate=${p}`
-    });
-    let d = await res.json();
-
-    let text = d.msg;
-    if (d.code === 0) {
-        if (d.is_special === 1) {
-            text = "离场成功\n特殊车辆无需缴费";
-        }
-        if (d.entry_time) {
-            text += "\n入场时间：" + d.entry_time;
-        }
-        if (d.exit_time) {
-            text += "\n离场时间：" + d.exit_time;
-        }
-        if (d.duration !== undefined) {
-            text += "\n停车时长：" + d.duration + " 分钟";
-        }
-        if (d.fee !== undefined) {
-            text += "\n需缴费：" + d.fee + " 元";
-        }
+    const plate = document.getElementById('p_plate').value;
+    const msgDiv = document.getElementById('p_msg');
+    
+    if (!plate) {
+        msgDiv.textContent = '请输入车牌号';
+        return;
     }
-    document.getElementById('p_msg').innerText = text;
+
+    try {
+        const formData = new FormData();
+        formData.append('plate', plate);
+
+        const response = await fetch('/api/pay', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+
+        if (data.code === 0) {
+            msgDiv.innerHTML = `
+                        缴费成功！<br>
+                        入场时间: ${data.entry_time}<br>
+                        离场时间: ${data.exit_time}<br>
+                        停车时长: ${data.duration_minutes} 分钟<br>
+                        费用: ${data.fee.toFixed(2)} 元
+                    `;
+            // Clear input after success
+            document.getElementById('p_plate').value = '';
+        } else {
+            msgDiv.textContent = data.msg;
+        }
+    } catch (error) {
+        console.error('Payment failed:', error);
+        msgDiv.textContent = '请求失败，请检查网络或联系管理员。';
+    }
 }
 </script>
 </body>

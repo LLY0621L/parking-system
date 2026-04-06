@@ -154,8 +154,8 @@ def enter():
 
 
 
-@app.route('/exit', methods=['POST'])
-def exit_park():
+@app.route('/api/pay', methods=['POST'])
+def api_pay():
     p = request.form.get('plate', '').strip()
     if not p:
         return jsonify({"code": 1, "msg": "请输入车牌"})
@@ -174,23 +174,25 @@ def exit_park():
     fee = calc_fee(ent, ext, r["is_special"])
     dur = round((ext - ent).total_seconds() / 3600, 2)
 
+    # 核心修复：更新记录，设置 exit_time 和 fee
     c.execute('''UPDATE records SET exit_time=?, duration=?, fee=?, paid=1 WHERE id=?''',
               (ext.strftime("%Y-%m-%d %H:%M:%S"), dur, fee, r["id"]))
 
-    c.execute('''UPDATE spots SET status="available", plate=NULL WHERE id=?''', (r["spot_id"],))
+    # 释放车位
+    c.execute('''UPDATE spots SET status="available", plate=NULL, is_reserved=0, reserved_time=NULL WHERE id=?''', (r["spot_id"],))
 
     conn.commit()
     conn.close()
 
     return jsonify({
         "code": 0,
-        "msg": "离场成功",
+        "msg": "缴费成功",
         "entry_time": r["entry_time"],
         "exit_time": ext.strftime("%Y-%m-%d %H:%M:%S"),
-        "duration": round((ext - ent).total_seconds() / 60, 2),  # 分钟
-        "fee": fee,
-        "is_special": r["is_special"]
+        "duration_minutes": round((ext - ent).total_seconds() / 60),
+        "fee": fee
     })
+
 
 @app.route('/spot')
 def spot():
@@ -280,15 +282,49 @@ def stats():
 
 @app.route('/api/stats')
 def api_stats():
+    from datetime import date, timedelta
     conn = get_db()
     c = conn.cursor()
-    c.execute("SELECT COUNT(*) as cnt,SUM(fee) as total FROM records WHERE paid=1")
-    total = dict(c.fetchone())
-    c.execute('''SELECT strftime('%Y-%m-%d',entry_time) d,
-                 COUNT(*) c,SUM(fee) s FROM records WHERE paid=1 GROUP BY d ORDER BY d''')
-    daily = [dict(x) for x in c.fetchall()]
+    
+    today = date.today()
+    start_date = today - timedelta(days=6)
+    
+    c.execute("""
+        SELECT 
+            date(exit_time) as day,
+            COUNT(id) as vehicle_count,
+            SUM(fee) as total_revenue
+        FROM records
+        WHERE exit_time IS NOT NULL AND date(exit_time) BETWEEN ? AND ?
+        GROUP BY day
+        ORDER BY day ASC
+    """, (start_date.strftime('%Y-%m-%d'), today.strftime('%Y-%m-%d')))
+    
+    db_data = {row['day']: {'vehicles': row['vehicle_count'], 'revenue': row['total_revenue']} for row in c.fetchall()}
     conn.close()
-    return jsonify({"total": total, "daily": daily})
+
+    labels = []
+    vehicle_data = []
+    revenue_data = []
+
+    for i in range(7):
+        current_date = start_date + timedelta(days=i)
+        date_str = current_date.strftime('%Y-%m-%d')
+        
+        labels.append(current_date.strftime('%m-%d'))
+        
+        if date_str in db_data:
+            vehicle_data.append(db_data[date_str]['vehicles'])
+            revenue_data.append(db_data[date_str]['revenue'])
+        else:
+            vehicle_data.append(0)
+            revenue_data.append(0)
+            
+    return jsonify({
+        'labels': labels,
+        'vehicle_data': vehicle_data,
+        'revenue_data': revenue_data
+    })
 
 
 if __name__ == '__main__':
