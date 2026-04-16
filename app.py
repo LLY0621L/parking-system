@@ -12,8 +12,9 @@ NORMAL_SPOTS = 10
 SPECIAL_SPOTS = 2
 SPOT_LAYOUT = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
 SPECIAL_SPOT_IDS = [11, 12]
-RATE_PER_MINUTE = 2  # 每分钟收费2元
-RESERVE_TIMEOUT = 2 # 预约保留2分钟
+RATE_PER_HOUR = 5  # 每小时收费5元
+FREE_MINUTES = 30 # 免费停车30分钟
+RESERVE_TIMEOUT = 15 # 预约保留15分钟
 
 
 # 数据库连接
@@ -73,15 +74,12 @@ def calc_fee(ent, ext, special):
         return 0.0
 
     seconds = (ext - ent).total_seconds()
-
-    # 规则：一分钟内免费
-    if seconds <= 60:
+    # 规则：三十分钟内免费
+    if seconds <= FREE_MINUTES * 60:
         return 0.0
-
-    # 规则：超过一分钟，按分钟向上取整计费
-    # 例如：1分30秒，按2分钟计费
-    minutes = math.ceil(seconds / 60)
-    return minutes * RATE_PER_MINUTE
+    # 规则：超过三十分钟，按小时向上取整计费
+    hours = math.ceil(seconds / 3600)
+    return hours * RATE_PER_HOUR
 
 
 # 释放超时预约
@@ -159,12 +157,10 @@ def api_pay():
     p = request.form.get('plate', '').strip()
     if not p:
         return jsonify({"code": 1, "msg": "请输入车牌"})
-
     conn = get_db()
     c = conn.cursor()
     c.execute('''SELECT * FROM records WHERE plate=? AND exit_time IS NULL ORDER BY entry_time DESC LIMIT 1''', (p,))
     r = c.fetchone()
-
     if not r:
         conn.close()
         return jsonify({"code": 1, "msg": "无入场记录"})
@@ -177,13 +173,11 @@ def api_pay():
     # 核心修复：更新记录，设置 exit_time 和 fee
     c.execute('''UPDATE records SET exit_time=?, duration=?, fee=?, paid=1 WHERE id=?''',
               (ext.strftime("%Y-%m-%d %H:%M:%S"), dur, fee, r["id"]))
-
     # 释放车位
     c.execute('''UPDATE spots SET status="available", plate=NULL, is_reserved=0, reserved_time=NULL WHERE id=?''', (r["spot_id"],))
 
     conn.commit()
     conn.close()
-
     return jsonify({
         "code": 0,
         "msg": "缴费成功",
@@ -325,6 +319,9 @@ def api_stats():
         'vehicle_data': vehicle_data,
         'revenue_data': revenue_data
     })
+
+
+
 
 
 if __name__ == '__main__':
